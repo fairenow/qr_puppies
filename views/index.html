@@ -3,15 +3,53 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PuppyQR Generator</title>
+  <title>PuppyQR — QR codes with adoptable-cute AI puppies inside</title>
+  <meta name="description" content="Generate a scannable QR code with a cute AI-made puppy badge in the center. Pick a style, choose a safety mode, and download." />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+  <!-- Open Graph / marketing metadata -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="PuppyQR" />
+  <meta property="og:title" content="PuppyQR — QR codes with AI puppies inside" />
+  <meta property="og:description" content="Generate a scannable QR code with a cute AI-made puppy badge in the center." />
+  <meta property="og:url" content="https://qr-puppies.vercel.app/" />
+  <meta property="og:image" content="https://qr-puppies.vercel.app/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="PuppyQR — QR codes with AI puppies inside" />
+  <meta name="twitter:description" content="Generate a scannable QR code with a cute AI-made puppy badge in the center." />
+  <meta name="twitter:image" content="https://qr-puppies.vercel.app/og-image.png" />
+
   <script src="https://unpkg.com/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
+  <div class="announce">
+    Scan-test every code before printing — the puppy sits over real data.
+  </div>
+
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-paw" aria-hidden="true">🐾</span>
+      <span class="brand-name">Puppy<span class="brand-accent">QR</span></span>
+    </a>
+    <nav class="site-nav">
+      <span class="nav-pill">Generate</span>
+      <a class="nav-pill nav-ghost" href="#how">How it works</a>
+    </nav>
+  </header>
+
   <main class="page">
     <section class="hero">
-      <p class="eyebrow">HTMX + Gemini API</p>
-      <h1>Generate QR codes with AI puppies inside.</h1>
+      <p class="eyebrow">AI puppy badge · scannable QR</p>
+      <h1>Generate QR codes with adorable puppies inside.</h1>
       <p class="subhead">
         Enter a link, choose a puppy style, and generate a scannable QR code with a cute AI-made puppy badge in the center.
       </p>
@@ -31,7 +69,7 @@
           <input
             type="url"
             name="targetUrl"
-            placeholder="https://aistandard.app"
+            placeholder="https://hshv.org"
             required
           />
         </label>
@@ -67,6 +105,19 @@
     </section>
 
     <section id="result" class="result"></section>
+
+    <section id="how" class="how">
+      <h2>How it works</h2>
+      <ol class="steps">
+        <li><span class="step-num">1</span> Paste the link you want the code to open.</li>
+        <li><span class="step-num">2</span> Pick a puppy style and a safety mode.</li>
+        <li><span class="step-num">3</span> Download your PuppyQR — generated in memory, never stored.</li>
+      </ol>
+    </section>
   </main>
+
+  <footer class="site-footer">
+    <p>Made with 🐾 for puppy people. Scan-test before printing.</p>
+  </footer>
 </body>
 </html>
