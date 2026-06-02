@@ -4,7 +4,12 @@ Generate a scannable QR code with an AI-generated puppy badge in the center.
 
 **Flow:** enter a URL → server generates puppy art with Imagen (via the Gemini
 API) → server builds a high-error-correction QR code → server composites the
-puppy badge into the center → HTMX swaps the result onto the page.
+puppy badge into the center **in memory** → HTMX swaps a preview + download
+button onto the page as a base64 data URL.
+
+Nothing is written to disk. The image only exists in the HTTP response — refresh
+the page and it's gone. This keeps the app privacy-friendly and makes serverless
+deploys (Vercel, etc.) painless.
 
 ## Stack
 
@@ -48,5 +53,4 @@ qr_puppies/
   public/styles.css
   views/index.html
   views/result.html
-  generated/        # output PNGs (gitignored)
 ```

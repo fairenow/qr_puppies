@@ -5,7 +5,6 @@ import fs from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import QRCode from "qrcode";
 import sharp from "sharp";
-import { nanoid } from "nanoid";
 import { GoogleGenAI } from "@google/genai";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -31,9 +30,6 @@ const SAFETY_MODES = {
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/node_modules", express.static(path.join(__dirname, "node_modules")));
-app.use("/generated", express.static(path.join(__dirname, "generated")));
-
-await fs.mkdir(path.join(__dirname, "generated"), { recursive: true });
 
 function isValidUrl(value) {
   try {
@@ -139,10 +135,6 @@ async function createCircularBadge(imageBuffer, size, borderSize) {
 }
 
 async function createPuppyQrCode({ targetUrl, puppyStyle, safetyMode }) {
-  const id = nanoid(10);
-  const outputFileName = `puppy-qr-${id}.png`;
-  const outputPath = path.join(__dirname, "generated", outputFileName);
-
   const mode = SAFETY_MODES[safetyMode] ?? SAFETY_MODES.balanced;
   const badgeSize = Math.round(QR_SIZE * mode.ratio);
   // Keep the inner puppy slightly smaller than the white badge border.
@@ -162,7 +154,8 @@ async function createPuppyQrCode({ targetUrl, puppyStyle, safetyMode }) {
   const puppyBuffer = await generatePuppyImage({ puppyStyle });
   const badgeBuffer = await createCircularBadge(puppyBuffer, puppySize, badgeSize);
 
-  await sharp(qrBuffer)
+  // Composite entirely in memory — nothing is written to disk.
+  const finalImageBuffer = await sharp(qrBuffer)
     .composite([
       {
         input: badgeBuffer,
@@ -171,9 +164,10 @@ async function createPuppyQrCode({ targetUrl, puppyStyle, safetyMode }) {
       },
     ])
     .png()
-    .toFile(outputPath);
+    .toBuffer();
 
-  return { imageUrl: `/generated/${outputFileName}`, modeLabel: mode.label };
+  const dataUrl = `data:image/png;base64,${finalImageBuffer.toString("base64")}`;
+  return { dataUrl, modeLabel: mode.label };
 }
 
 app.get("/", async (req, res) => {
@@ -197,7 +191,7 @@ app.post("/generate", async (req, res) => {
       return res.status(400).send(html);
     }
 
-    const { imageUrl, modeLabel } = await createPuppyQrCode({
+    const { dataUrl, modeLabel } = await createPuppyQrCode({
       targetUrl,
       puppyStyle: puppyStyle || "soft 3D sticker illustration",
       safetyMode,
@@ -205,9 +199,9 @@ app.post("/generate", async (req, res) => {
 
     const html = await renderTemplate("result.html", {
       resultTitle: "Your PuppyQR is ready.",
-      resultMessage: `Safety mode: ${modeLabel}. Scan-test it before printing or using it publicly.`,
-      imageUrl,
-      downloadUrl: imageUrl,
+      resultMessage: `Safety mode: ${modeLabel}. Generated in memory — nothing is stored. Scan-test before printing.`,
+      imageUrl: dataUrl,
+      downloadUrl: dataUrl,
       showImage: "",
     });
     res.send(html);
