@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PuppyQR Generator</title>
+  <script src="/node_modules/htmx.org/dist/htmx.min.js"></script>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">HTMX + Gemini API</p>
+      <h1>Generate QR codes with AI puppies inside.</h1>
+      <p class="subhead">
+        Enter a link, choose a puppy style, and generate a scannable QR code with a cute AI-made puppy badge in the center.
+      </p>
+    </section>
+
+    <section class="card">
+      <form
+        hx-post="/generate"
+        hx-target="#result"
+        hx-swap="innerHTML"
+        hx-indicator="#loading"
+        hx-disabled-elt="button"
+        class="form"
+      >
+        <label>
+          Destination URL
+          <input
+            type="url"
+            name="targetUrl"
+            placeholder="https://aistandard.app"
+            required
+          />
+        </label>
+
+        <label>
+          Puppy style
+          <select name="puppyStyle">
+            <option value="soft 3D sticker illustration">Soft 3D Sticker</option>
+            <option value="photorealistic golden retriever puppy portrait">Photorealistic Golden Retriever</option>
+            <option value="watercolor puppy illustration">Watercolor Puppy</option>
+            <option value="cartoon corgi puppy mascot">Cartoon Corgi Mascot</option>
+            <option value="premium app icon style puppy mascot">Premium App Icon Mascot</option>
+          </select>
+        </label>
+
+        <label>
+          QR safety mode
+          <select name="safetyMode">
+            <option value="safe">Safe — 18% badge (printing, flyers, packaging)</option>
+            <option value="balanced" selected>Balanced — 24% badge (digital sharing)</option>
+            <option value="bold">Bold — 30% badge (visual previews only)</option>
+          </select>
+        </label>
+
+        <button type="submit">
+          Generate PuppyQR
+        </button>
+
+        <div id="loading" class="loading htmx-indicator">
+          Generating puppy magic...
+        </div>
+      </form>
+    </section>
+
+    <section id="result" class="result"></section>
+  </main>
+</body>
+</html>
