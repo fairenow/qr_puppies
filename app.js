@@ -178,7 +178,7 @@ app.get("/", (req, res) => {
 
 app.post("/generate", async (req, res) => {
   try {
-    const { targetUrl, puppyStyle, safetyMode } = req.body;
+    const { targetUrl, puppyStyle, customPuppy, safetyMode } = req.body;
 
     if (!targetUrl || !isValidUrl(targetUrl)) {
       const html = renderTemplate("result", {
@@ -192,9 +192,13 @@ app.post("/generate", async (req, res) => {
       return res.status(400).send(html);
     }
 
+    // A typed custom request wins over the picked style.
+    const custom = (customPuppy || "").trim().slice(0, 120);
+    const chosenStyle = custom || puppyStyle || "soft 3D sticker illustration";
+
     const { dataUrl, modeLabel } = await createPuppyQrCode({
       targetUrl,
-      puppyStyle: puppyStyle || "soft 3D sticker illustration",
+      puppyStyle: chosenStyle,
       safetyMode,
     });
 

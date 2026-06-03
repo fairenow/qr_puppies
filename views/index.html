@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PuppyQR — QR codes with adoptable-cute AI puppies inside</title>
-  <meta name="description" content="Generate a scannable QR code with a cute AI-made puppy badge in the center. Pick a style, choose a safety mode, and download." />
+  <title>PuppyQR — Custom QR codes with puppies inside</title>
+  <meta name="description" content="Create a custom puppy QR code you'll love to share. Pick a pup style or describe your own, drop your link, and download." />
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
@@ -14,8 +14,8 @@
   <!-- Open Graph / marketing metadata -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="PuppyQR" />
-  <meta property="og:title" content="PuppyQR — QR codes with AI puppies inside" />
-  <meta property="og:description" content="Generate a scannable QR code with a cute AI-made puppy badge in the center." />
+  <meta property="og:title" content="PuppyQR — QR codes with puppies inside" />
+  <meta property="og:description" content="Create a custom puppy QR code you'll love to share." />
   <meta property="og:url" content="https://qr-puppies.vercel.app/" />
   <meta property="og:image" content="https://qr-puppies.vercel.app/og-image.png" />
   <meta property="og:image:width" content="1200" />
@@ -23,37 +23,29 @@
 
   <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="PuppyQR — QR codes with AI puppies inside" />
-  <meta name="twitter:description" content="Generate a scannable QR code with a cute AI-made puppy badge in the center." />
+  <meta name="twitter:title" content="PuppyQR — QR codes with puppies inside" />
+  <meta name="twitter:description" content="Create a custom puppy QR code you'll love to share." />
   <meta name="twitter:image" content="https://qr-puppies.vercel.app/og-image.png" />
 
   <script src="https://unpkg.com/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div class="announce">
-    Scan-test every code before printing — the puppy sits over real data.
-  </div>
-
   <header class="site-header">
     <a class="brand" href="/">
       <span class="brand-paw" aria-hidden="true">🐾</span>
       <span class="brand-name">Puppy<span class="brand-accent">QR</span></span>
     </a>
-    <nav class="site-nav">
-      <span class="nav-pill">Generate</span>
-      <a class="nav-pill nav-ghost" href="#how">How it works</a>
-    </nav>
   </header>
 
   <main class="page">
     <section class="hero">
-      <p class="eyebrow">AI puppy badge · scannable QR</p>
-      <h1>Generate QR codes with adorable puppies inside.</h1>
-      <p class="subhead">
-        Enter a link, choose a puppy style, and generate a scannable QR code with a cute AI-made puppy badge in the center.
-      </p>
+      <h1>Custom puppy QR codes</h1>
+      <p class="tagline">Pick a pup, drop your link, and share a scannable code you'll actually love. 🐶</p>
     </section>
+
+    <!-- Rotating real-puppy photos above the form -->
+    <div class="puppy-rotator" id="puppyRotator" aria-hidden="true"></div>
 
     <section class="card">
       <form
@@ -64,60 +56,159 @@
         hx-disabled-elt="button"
         class="form"
       >
-        <label>
-          Destination URL
+        <label class="field">
+          Where should it go?
           <input
             type="url"
             name="targetUrl"
-            placeholder="https://hshv.org"
+            placeholder="https://your-link.com"
             required
           />
         </label>
 
-        <label>
-          Puppy style
-          <select name="puppyStyle">
-            <option value="soft 3D sticker illustration">Soft 3D Sticker</option>
-            <option value="photorealistic golden retriever puppy portrait">Photorealistic Golden Retriever</option>
-            <option value="watercolor puppy illustration">Watercolor Puppy</option>
-            <option value="cartoon corgi puppy mascot">Cartoon Corgi Mascot</option>
-            <option value="premium app icon style puppy mascot">Premium App Icon Mascot</option>
-          </select>
+        <div class="field">
+          <span class="field-label">Pick your pup</span>
+          <div class="scroller-wrap">
+            <button type="button" class="scroll-btn" data-dir="-1" aria-label="Scroll styles left">‹</button>
+            <div class="style-scroller" id="styleScroller" role="radiogroup" aria-label="Choose a puppy style">
+              <label class="style-card c1">
+                <input type="radio" name="puppyStyle" value="soft 3D sticker illustration" checked />
+                <span class="style-emoji">🧸</span>
+                <span class="style-title">Squishy Sticker</span>
+              </label>
+              <label class="style-card c2">
+                <input type="radio" name="puppyStyle" value="photorealistic golden retriever puppy portrait" />
+                <span class="style-emoji">📸</span>
+                <span class="style-title">Real-Life Goldie</span>
+              </label>
+              <label class="style-card c3">
+                <input type="radio" name="puppyStyle" value="soft watercolor puppy illustration" />
+                <span class="style-emoji">🎨</span>
+                <span class="style-title">Watercolor Woof</span>
+              </label>
+              <label class="style-card c4">
+                <input type="radio" name="puppyStyle" value="cute cartoon corgi puppy mascot" />
+                <span class="style-emoji">🐶</span>
+                <span class="style-title">Cartoon Corgi</span>
+              </label>
+              <label class="style-card c5">
+                <input type="radio" name="puppyStyle" value="premium glossy app-icon style puppy mascot" />
+                <span class="style-emoji">✨</span>
+                <span class="style-title">Shiny Mascot</span>
+              </label>
+              <label class="style-card c6">
+                <input type="radio" name="puppyStyle" value="retro pixel-art puppy sprite" />
+                <span class="style-emoji">🕹️</span>
+                <span class="style-title">Pixel Pup</span>
+              </label>
+              <label class="style-card c7">
+                <input type="radio" name="puppyStyle" value="kawaii chibi puppy illustration" />
+                <span class="style-emoji">🌸</span>
+                <span class="style-title">Kawaii Pup</span>
+              </label>
+              <label class="style-card c8">
+                <input type="radio" name="puppyStyle" value="hand-drawn crayon doodle puppy" />
+                <span class="style-emoji">🖍️</span>
+                <span class="style-title">Doodle Pup</span>
+              </label>
+            </div>
+            <button type="button" class="scroll-btn" data-dir="1" aria-label="Scroll styles right">›</button>
+          </div>
+        </div>
+
+        <label class="field">
+          Or describe your dream pup
+          <input
+            type="text"
+            name="customPuppy"
+            maxlength="120"
+            placeholder="e.g. fluffy husky puppy wearing a tiny hat"
+          />
+          <span class="field-hint">Describe one here and it overrides the style above.</span>
         </label>
 
-        <label>
+        <label class="field">
           QR safety mode
           <select name="safetyMode">
-            <option value="safe">Safe — 18% badge (printing, flyers, packaging)</option>
-            <option value="balanced" selected>Balanced — 24% badge (digital sharing)</option>
-            <option value="bold">Bold — 30% badge (visual previews only)</option>
+            <option value="safe">Safe — small badge (best for print)</option>
+            <option value="balanced" selected>Balanced — medium badge (digital sharing)</option>
+            <option value="bold">Bold — big badge (preview only)</option>
           </select>
         </label>
 
-        <button type="submit">
-          Generate PuppyQR
-        </button>
+        <button type="submit">Generate my PuppyQR 🐾</button>
 
-        <div id="loading" class="loading htmx-indicator">
-          Generating puppy magic...
-        </div>
+        <div id="loading" class="loading htmx-indicator">Fetching a good boy…</div>
       </form>
     </section>
 
     <section id="result" class="result"></section>
-
-    <section id="how" class="how">
-      <h2>How it works</h2>
-      <ol class="steps">
-        <li><span class="step-num">1</span> Paste the link you want the code to open.</li>
-        <li><span class="step-num">2</span> Pick a puppy style and a safety mode.</li>
-        <li><span class="step-num">3</span> Download your PuppyQR — generated in memory, never stored.</li>
-      </ol>
-    </section>
   </main>
 
   <footer class="site-footer">
-    <p>Made with 🐾 for puppy people. Scan-test before printing.</p>
+    <p>Made with 🐾 · Generated in memory, never stored · Scan-test before printing.</p>
   </footer>
+
+  <script>
+    // --- Rotating real-puppy photos -------------------------------------
+    // These hotlink real dog photos so the user's browser loads them.
+    // To self-host instead: drop images in /public/puppies and replace the
+    // URLs below with "/puppies/1.jpg", "/puppies/2.jpg", etc.
+    const PUPPY_PHOTOS = [
+      "https://placedog.net/900/420?id=170",
+      "https://placedog.net/900/420?id=162",
+      "https://placedog.net/900/420?id=58",
+      "https://placedog.net/900/420?id=119",
+      "https://placedog.net/900/420?id=200",
+    ];
+
+    (function initRotator() {
+      const wrap = document.getElementById("puppyRotator");
+      if (!wrap) return;
+      PUPPY_PHOTOS.forEach((src, i) => {
+        const img = document.createElement("img");
+        img.src = src;
+        img.alt = "";
+        img.className = "puppy-slide" + (i === 0 ? " is-active" : "");
+        img.loading = i === 0 ? "eager" : "lazy";
+        img.addEventListener("error", () => img.remove());
+        wrap.appendChild(img);
+      });
+      setInterval(() => {
+        const slides = wrap.querySelectorAll(".puppy-slide");
+        if (slides.length < 2) return;
+        const current = wrap.querySelector(".puppy-slide.is-active") || slides[0];
+        let next = current.nextElementSibling;
+        if (!next || !next.classList.contains("puppy-slide")) next = slides[0];
+        current.classList.remove("is-active");
+        next.classList.add("is-active");
+      }, 3200);
+    })();
+
+    // --- Horizontal style scroller (fast wheel + arrows) ----------------
+    (function initScroller() {
+      const scroller = document.getElementById("styleScroller");
+      if (!scroller) return;
+
+      // Translate vertical wheel into fast horizontal scroll on desktop.
+      scroller.addEventListener("wheel", (e) => {
+        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+        e.preventDefault();
+        scroller.scrollBy({ left: e.deltaY * 1.4, behavior: "auto" });
+      }, { passive: false });
+
+      // Arrow buttons.
+      document.querySelectorAll(".scroll-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const dir = Number(btn.dataset.dir);
+          scroller.scrollBy({ left: dir * Math.round(scroller.clientWidth * 0.8), behavior: "smooth" });
+        });
+      });
+
+      // Picking a style clears any custom request so intent is unambiguous.
+      const customInput = document.querySelector('input[name="customPuppy"]');
+      scroller.addEventListener("change", () => { if (customInput) customInput.value = ""; });
+    })();
+  </script>
 </body>
 </html>
