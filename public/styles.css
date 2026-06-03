@@ -206,8 +206,10 @@ button:disabled { opacity: 0.65; cursor: progress; }
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
-  /* Side padding lets the first and last card reach the center. */
-  padding: 8px calc(50% - var(--card-w) / 2) 14px;
+  /* Horizontal centering padding is set in JS (in px) for precision — CSS
+     percentage padding resolves against the parent's width, not the scroller's,
+     which over-pads and hides the cards. */
+  padding: 8px 0 14px;
   scrollbar-width: none;
 }
 .style-scroller::-webkit-scrollbar { display: none; }
