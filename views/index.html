@@ -68,51 +68,13 @@
 
         <div class="field">
           <span class="field-label">Pick your pup</span>
+          <span class="field-hint">A live preview of the QR you'll get. Swipe or use the arrows — the centered one is selected.</span>
           <div class="scroller-wrap">
-            <button type="button" class="scroll-btn" data-dir="-1" aria-label="Scroll styles left">‹</button>
+            <button type="button" class="scroll-btn" data-dir="-1" aria-label="Previous style">‹</button>
             <div class="style-scroller" id="styleScroller" role="radiogroup" aria-label="Choose a puppy style">
-              <label class="style-card c1">
-                <input type="radio" name="puppyStyle" value="soft 3D sticker illustration" checked />
-                <span class="style-emoji">🧸</span>
-                <span class="style-title">Squishy Sticker</span>
-              </label>
-              <label class="style-card c2">
-                <input type="radio" name="puppyStyle" value="photorealistic golden retriever puppy portrait" />
-                <span class="style-emoji">📸</span>
-                <span class="style-title">Real-Life Goldie</span>
-              </label>
-              <label class="style-card c3">
-                <input type="radio" name="puppyStyle" value="soft watercolor puppy illustration" />
-                <span class="style-emoji">🎨</span>
-                <span class="style-title">Watercolor Woof</span>
-              </label>
-              <label class="style-card c4">
-                <input type="radio" name="puppyStyle" value="cute cartoon corgi puppy mascot" />
-                <span class="style-emoji">🐶</span>
-                <span class="style-title">Cartoon Corgi</span>
-              </label>
-              <label class="style-card c5">
-                <input type="radio" name="puppyStyle" value="premium glossy app-icon style puppy mascot" />
-                <span class="style-emoji">✨</span>
-                <span class="style-title">Shiny Mascot</span>
-              </label>
-              <label class="style-card c6">
-                <input type="radio" name="puppyStyle" value="retro pixel-art puppy sprite" />
-                <span class="style-emoji">🕹️</span>
-                <span class="style-title">Pixel Pup</span>
-              </label>
-              <label class="style-card c7">
-                <input type="radio" name="puppyStyle" value="kawaii chibi puppy illustration" />
-                <span class="style-emoji">🌸</span>
-                <span class="style-title">Kawaii Pup</span>
-              </label>
-              <label class="style-card c8">
-                <input type="radio" name="puppyStyle" value="hand-drawn crayon doodle puppy" />
-                <span class="style-emoji">🖍️</span>
-                <span class="style-title">Doodle Pup</span>
-              </label>
+              {{styleCards}}
             </div>
-            <button type="button" class="scroll-btn" data-dir="1" aria-label="Scroll styles right">›</button>
+            <button type="button" class="scroll-btn" data-dir="1" aria-label="Next style">›</button>
           </div>
         </div>
 
@@ -185,29 +147,81 @@
       }, 3200);
     })();
 
-    // --- Horizontal style scroller (fast wheel + arrows) ----------------
-    (function initScroller() {
+    // --- Focused style carousel (one highlighted at a time) -------------
+    (function initCarousel() {
       const scroller = document.getElementById("styleScroller");
       if (!scroller) return;
+      const cards = () => Array.from(scroller.querySelectorAll(".style-card"));
+      const customInput = document.querySelector('input[name="customPuppy"]');
 
-      // Translate vertical wheel into fast horizontal scroll on desktop.
-      scroller.addEventListener("wheel", (e) => {
-        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
-        e.preventDefault();
-        scroller.scrollBy({ left: e.deltaY * 1.4, behavior: "auto" });
-      }, { passive: false });
+      function centerOf(el) {
+        return el.offsetLeft + el.offsetWidth / 2;
+      }
 
-      // Arrow buttons.
+      function setActive(card, { check = true } = {}) {
+        if (!card) return;
+        cards().forEach((c) => c.classList.toggle("is-active", c === card));
+        const radio = card.querySelector('input[type="radio"]');
+        if (check && radio && !radio.checked) {
+          radio.checked = true;
+          if (customInput) customInput.value = ""; // explicit pick clears custom request
+        }
+      }
+
+      function nearestCard() {
+        const mid = scroller.scrollLeft + scroller.clientWidth / 2;
+        let best = null, bestDist = Infinity;
+        cards().forEach((c) => {
+          const d = Math.abs(centerOf(c) - mid);
+          if (d < bestDist) { bestDist = d; best = c; }
+        });
+        return best;
+      }
+
+      function scrollToCard(card, smooth = true) {
+        if (!card) return;
+        const left = centerOf(card) - scroller.clientWidth / 2;
+        scroller.scrollTo({ left, behavior: smooth ? "smooth" : "auto" });
+      }
+
+      // Highlight the centered card as the user scrolls/swipes.
+      let raf = null;
+      scroller.addEventListener("scroll", () => {
+        if (raf) return;
+        raf = requestAnimationFrame(() => {
+          raf = null;
+          setActive(nearestCard());
+        });
+      }, { passive: true });
+
+      // Click a card -> bring it to center.
+      cards().forEach((card) => {
+        card.addEventListener("click", () => { setActive(card); scrollToCard(card); });
+      });
+
+      // Arrows -> step one card.
       document.querySelectorAll(".scroll-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
           const dir = Number(btn.dataset.dir);
-          scroller.scrollBy({ left: dir * Math.round(scroller.clientWidth * 0.8), behavior: "smooth" });
+          const list = cards();
+          const idx = list.indexOf(scroller.querySelector(".style-card.is-active") || list[0]);
+          const next = list[Math.min(list.length - 1, Math.max(0, idx + dir))];
+          setActive(next);
+          scrollToCard(next);
         });
       });
 
-      // Picking a style clears any custom request so intent is unambiguous.
-      const customInput = document.querySelector('input[name="customPuppy"]');
-      scroller.addEventListener("change", () => { if (customInput) customInput.value = ""; });
+      // Desktop: vertical wheel scrolls the carousel horizontally.
+      scroller.addEventListener("wheel", (e) => {
+        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+        e.preventDefault();
+        scroller.scrollBy({ left: e.deltaY * 1.4 });
+      }, { passive: false });
+
+      // Start centered on the default (checked) card.
+      const initial = scroller.querySelector('.style-card input:checked')?.closest(".style-card") || cards()[0];
+      setActive(initial, { check: false });
+      requestAnimationFrame(() => scrollToCard(initial, false));
     })();
   </script>
 </body>
