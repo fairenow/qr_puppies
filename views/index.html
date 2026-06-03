@@ -31,6 +31,9 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
+  <!-- Left rotating ad rail (desktop) -->
+  <aside class="ad-slot ad-slot--left" id="leftAd" aria-label="Advertisement"></aside>
+
   <header class="site-header">
     <a class="brand" href="/">
       <span class="brand-paw" aria-hidden="true">🐾</span>
@@ -44,7 +47,7 @@
       <p class="tagline">Pick a pup, drop your link, and share a scannable code you'll actually love. 🐶</p>
     </section>
 
-    <!-- Rotating real-puppy photos above the form -->
+    <!-- Rotating real-puppy photos — large at the top of the hero -->
     <div class="puppy-rotator" id="puppyRotator" aria-hidden="true"></div>
 
     <section class="card">
@@ -111,17 +114,46 @@
     <p>Made with 🐾 · Generated in memory, never stored · Scan-test before printing.</p>
   </footer>
 
+  <!-- Bottom rotating ad banner -->
+  <div class="ad-slot ad-slot--bottom" id="bottomAd" aria-label="Advertisement"></div>
+
+  <!-- Drop-down film ad modal -->
+  <div class="ad-modal" id="adModal" aria-hidden="true">
+    <div class="ad-modal-panel" role="dialog" aria-modal="true" aria-label="Sponsored film">
+      <div class="ad-tag">Sponsored · Advertisement</div>
+      <div class="ad-video">
+        <iframe id="adFrame" title="Sponsored film" frameborder="0"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowfullscreen></iframe>
+        <!-- transparent layer blocks player controls / pausing -->
+        <div class="ad-video-block"></div>
+      </div>
+      <form class="ad-email" id="adEmail">
+        <label for="adEmailInput">🎬 Want to learn more about the film? <span>(optional)</span></label>
+        <div class="ad-email-row">
+          <input id="adEmailInput" type="email" name="email" placeholder="you@email.com" autocomplete="email" />
+          <button type="submit">Notify me</button>
+        </div>
+        <p class="ad-email-done" hidden>Thanks! We'll be in touch about the film. 🎬</p>
+      </form>
+      <div class="ad-skip">
+        <span id="adCountdown" class="ad-countdown">You can skip in 20s…</span>
+        <button id="adClose" class="ad-close" type="button" hidden aria-label="Close ad">✕</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // --- Rotating real-puppy photos -------------------------------------
     // These hotlink real dog photos so the user's browser loads them.
     // To self-host instead: drop images in /public/puppies and replace the
     // URLs below with "/puppies/1.jpg", "/puppies/2.jpg", etc.
     const PUPPY_PHOTOS = [
-      "https://placedog.net/900/420?id=170",
-      "https://placedog.net/900/420?id=162",
-      "https://placedog.net/900/420?id=58",
-      "https://placedog.net/900/420?id=119",
-      "https://placedog.net/900/420?id=200",
+      "https://placedog.net/1100/520?id=170",
+      "https://placedog.net/1100/520?id=162",
+      "https://placedog.net/1100/520?id=58",
+      "https://placedog.net/1100/520?id=119",
+      "https://placedog.net/1100/520?id=200",
     ];
 
     (function initRotator() {
@@ -153,10 +185,7 @@
       if (!scroller) return;
       const cards = () => Array.from(scroller.querySelectorAll(".style-card"));
       const customInput = document.querySelector('input[name="customPuppy"]');
-
-      function centerOf(el) {
-        return el.offsetLeft + el.offsetWidth / 2;
-      }
+      const centerOf = (el) => el.offsetLeft + el.offsetWidth / 2;
 
       function setActive(card, { check = true } = {}) {
         if (!card) return;
@@ -164,10 +193,9 @@
         const radio = card.querySelector('input[type="radio"]');
         if (check && radio && !radio.checked) {
           radio.checked = true;
-          if (customInput) customInput.value = ""; // explicit pick clears custom request
+          if (customInput) customInput.value = "";
         }
       }
-
       function nearestCard() {
         const mid = scroller.scrollLeft + scroller.clientWidth / 2;
         let best = null, bestDist = Infinity;
@@ -177,51 +205,156 @@
         });
         return best;
       }
-
       function scrollToCard(card, smooth = true) {
         if (!card) return;
-        const left = centerOf(card) - scroller.clientWidth / 2;
-        scroller.scrollTo({ left, behavior: smooth ? "smooth" : "auto" });
+        scroller.scrollTo({ left: centerOf(card) - scroller.clientWidth / 2, behavior: smooth ? "smooth" : "auto" });
       }
-
-      // Highlight the centered card as the user scrolls/swipes.
       let raf = null;
       scroller.addEventListener("scroll", () => {
         if (raf) return;
-        raf = requestAnimationFrame(() => {
-          raf = null;
-          setActive(nearestCard());
-        });
+        raf = requestAnimationFrame(() => { raf = null; setActive(nearestCard()); });
       }, { passive: true });
-
-      // Click a card -> bring it to center.
-      cards().forEach((card) => {
-        card.addEventListener("click", () => { setActive(card); scrollToCard(card); });
-      });
-
-      // Arrows -> step one card.
+      cards().forEach((card) => card.addEventListener("click", () => { setActive(card); scrollToCard(card); }));
       document.querySelectorAll(".scroll-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
           const dir = Number(btn.dataset.dir);
           const list = cards();
           const idx = list.indexOf(scroller.querySelector(".style-card.is-active") || list[0]);
           const next = list[Math.min(list.length - 1, Math.max(0, idx + dir))];
-          setActive(next);
-          scrollToCard(next);
+          setActive(next); scrollToCard(next);
         });
       });
-
-      // Desktop: vertical wheel scrolls the carousel horizontally.
       scroller.addEventListener("wheel", (e) => {
         if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
         e.preventDefault();
         scroller.scrollBy({ left: e.deltaY * 1.4 });
       }, { passive: false });
-
-      // Start centered on the default (checked) card.
       const initial = scroller.querySelector('.style-card input:checked')?.closest(".style-card") || cards()[0];
       setActive(initial, { check: false });
       requestAnimationFrame(() => scrollToCard(initial, false));
+    })();
+
+    // --- Rotating banner ads --------------------------------------------
+    const AD_CREATIVES = [
+      { cat: "DOG",        emoji: "🦴", title: "PupBox Treats",     sub: "Healthy chews, delivered", bg: "linear-gradient(135deg,#ff9a3c,#e8742c)" },
+      { cat: "FOOD",       emoji: "🍖", title: "Farm Fresh Kibble", sub: "Real meat, no fillers",    bg: "linear-gradient(135deg,#3aa8ae,#2e878c)" },
+      { cat: "COMMERCIAL", emoji: "🎬", title: "Now Streaming",     sub: "Watch the film",           bg: "linear-gradient(135deg,#1e50c8,#3a6fe0)" },
+      { cat: "ADOPT",      emoji: "🐕", title: "Adopt, Don't Shop", sub: "Find your best friend",    bg: "linear-gradient(135deg,#b4bb7d,#8f9a4e)" },
+      { cat: "FOOD",       emoji: "🥩", title: "BarkBite Jerky",    sub: "Tail-wagging good",        bg: "linear-gradient(135deg,#e88a6b,#d9684a)" },
+      { cat: "GEAR",       emoji: "🦺", title: "TrailPup Harness",  sub: "Adventure ready",          bg: "linear-gradient(135deg,#7f7fd5,#86a8e7)" },
+    ];
+
+    function adMarkup(a) {
+      return `<button type="button" class="ad-creative" style="--ad-bg:${a.bg}">
+        <span class="ad-cat">${a.cat}</span>
+        <span class="ad-emoji">${a.emoji}</span>
+        <span class="ad-text"><span class="ad-title">${a.title}</span><span class="ad-sub">${a.sub}</span></span>
+        <span class="ad-cta">Learn more →</span>
+      </button>`;
+    }
+
+    (function initAds() {
+      const left = document.getElementById("leftAd");
+      const bottom = document.getElementById("bottomAd");
+      let i = Math.floor(Math.random() * AD_CREATIVES.length);
+      function paint() {
+        const a = AD_CREATIVES[i % AD_CREATIVES.length];
+        const b = AD_CREATIVES[(i + 3) % AD_CREATIVES.length];
+        if (left) left.innerHTML = adMarkup(a);
+        if (bottom) bottom.innerHTML = adMarkup(b);
+        i++;
+      }
+      paint();
+      setInterval(paint, 5000);
+      // Any ad click plays the sponsored film.
+      [left, bottom].forEach((el) => el && el.addEventListener("click", (e) => {
+        if (e.target.closest(".ad-creative")) openAdModal();
+      }));
+    })();
+
+    // --- Drop-down film ad modal ----------------------------------------
+    const AD_VIDEOS = ["gE77VnBoLRU", "OJ19I9q_hOQ", "aTAacTUKK00", "H1OvI98SDqs"];
+    const SKIP_AFTER = 20; // seconds
+
+    let adTimer = null, adCurrentVideo = "";
+
+    function openAdModal() {
+      const modal = document.getElementById("adModal");
+      const frame = document.getElementById("adFrame");
+      const countdown = document.getElementById("adCountdown");
+      const closeBtn = document.getElementById("adClose");
+      const emailForm = document.getElementById("adEmail");
+      if (!modal || modal.classList.contains("open")) return;
+
+      adCurrentVideo = AD_VIDEOS[Math.floor(Math.random() * AD_VIDEOS.length)];
+      frame.src = `https://www.youtube.com/embed/${adCurrentVideo}` +
+        `?autoplay=1&controls=0&modestbranding=1&rel=0&disablekb=1&playsinline=1&fs=0&iv_load_policy=3`;
+
+      // reset UI
+      emailForm.reset();
+      emailForm.querySelector(".ad-email-done").hidden = true;
+      emailForm.querySelector(".ad-email-row").hidden = false;
+      closeBtn.hidden = true;
+      countdown.hidden = false;
+
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+
+      let left = SKIP_AFTER;
+      countdown.textContent = `You can skip in ${left}s…`;
+      clearInterval(adTimer);
+      adTimer = setInterval(() => {
+        left -= 1;
+        if (left > 0) {
+          countdown.textContent = `You can skip in ${left}s…`;
+        } else {
+          clearInterval(adTimer);
+          countdown.hidden = true;
+          closeBtn.hidden = false;
+        }
+      }, 1000);
+    }
+
+    function closeAdModal() {
+      const modal = document.getElementById("adModal");
+      const frame = document.getElementById("adFrame");
+      if (!modal) return;
+      clearInterval(adTimer);
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+      frame.src = ""; // stop playback
+      document.body.style.overflow = "";
+    }
+
+    (function initAdModal() {
+      document.getElementById("adClose").addEventListener("click", closeAdModal);
+
+      // Email capture (optional) — does not close the modal.
+      document.getElementById("adEmail").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const input = document.getElementById("adEmailInput");
+        const email = (input.value || "").trim();
+        if (!email) return;
+        fetch("/lead", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ email, video: adCurrentVideo }),
+        }).catch(() => {});
+        e.target.querySelector(".ad-email-row").hidden = true;
+        e.target.querySelector(".ad-email-done").hidden = false;
+      });
+
+      // Play the film when the user kicks off a generation (pre-roll ad).
+      document.querySelector("form[hx-post]").addEventListener("submit", () => openAdModal());
+
+      // Auto-play once per session as an interstitial.
+      try {
+        if (!sessionStorage.getItem("puppyqr_ad_shown")) {
+          sessionStorage.setItem("puppyqr_ad_shown", "1");
+          setTimeout(openAdModal, 1200);
+        }
+      } catch (_) { /* sessionStorage unavailable */ }
     })();
   </script>
 </body>

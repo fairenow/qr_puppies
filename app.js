@@ -68,6 +68,14 @@ app.get("/", (req, res) => {
   res.send(html);
 });
 
+// Optional email capture from the film ad modal ("learn more about the film").
+app.post("/lead", (req, res) => {
+  const email = (req.body.email || "").trim().slice(0, 200);
+  const video = (req.body.video || "").trim().slice(0, 40);
+  if (email) console.log(`[lead] film interest: ${email}${video ? ` (video ${video})` : ""}`);
+  res.status(204).end();
+});
+
 app.post("/generate", async (req, res) => {
   try {
     const { targetUrl, puppyStyle, customPuppy, safetyMode } = req.body;
