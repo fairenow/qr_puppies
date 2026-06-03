@@ -112,9 +112,13 @@ h1 {
   box-shadow: 0 18px 50px rgba(46, 135, 140, 0.12);
 }
 
-.form { display: grid; gap: 20px; }
+.form { display: grid; gap: 20px; text-align: center; }
 
-.field { display: grid; gap: 8px; }
+.field { display: grid; gap: 8px; justify-items: center; }
+.field > input,
+.field > select,
+.field > .pup-carousel,
+.field > .pup-dots { justify-self: stretch; }
 
 .field,
 .field-label {
@@ -139,6 +143,7 @@ select {
   padding: 14px 16px;
   font-size: 1rem;
   font-family: inherit;
+  text-align: left; /* keep typed text left-aligned even though labels are centered */
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
