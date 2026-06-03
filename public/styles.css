@@ -175,112 +175,82 @@ button:disabled { opacity: 0.65; cursor: progress; }
 .htmx-request .htmx-indicator,
 .htmx-request.htmx-indicator { display: block; }
 
-/* Horizontal style picker */
-.scroller-wrap {
+/* Style picker — one pup shown at a time, centered in the card */
+.pup-carousel {
   display: flex;
-  align-items: stretch;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
 }
 
-.scroll-btn {
+.pup-nav {
   flex: none;
-  width: 38px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
   background: var(--teal-soft);
   color: var(--teal-dark);
-  border-radius: 12px;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: 800;
   line-height: 1;
-  padding: 0;
+  display: grid;
+  place-items: center;
 }
+.pup-nav:hover { background: #d3eaeb; }
 
-.scroll-btn:hover { background: #d3eaeb; }
-
-.scroller-wrap { align-items: center; }
-
-.style-scroller {
-  --card-w: clamp(150px, 48vw, 208px);
-  flex: 1 1 0;
-  min-width: 0; /* allow the flex child to shrink so it scrolls instead of overflowing the card */
+/* The stage holds all cards stacked; only the active one is displayed, so it
+   is always centered and can never overflow the white card. */
+.pup-stage {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
-  gap: 18px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-  /* Horizontal centering padding is set in JS (in px) for precision — CSS
-     percentage padding resolves against the parent's width, not the scroller's,
-     which over-pads and hides the cards. */
-  padding: 8px 0 14px;
-  scrollbar-width: none;
+  justify-content: center;
+  touch-action: pan-y;
 }
-.style-scroller::-webkit-scrollbar { display: none; }
 
 .style-card {
-  position: relative;
-  flex: 0 0 var(--card-w);
-  width: var(--card-w);
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  scroll-snap-align: center;
+  gap: 12px;
+  width: 100%;
   user-select: none;
-  /* Non-centered cards are dimmed + shrunk so one is highlighted at a time. */
-  opacity: 0.4;
-  transform: scale(0.82);
-  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.style-card.is-active { display: flex; animation: pupIn 0.25s ease; }
+
+@keyframes pupIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: none; }
 }
 
-.style-card.is-active {
-  opacity: 1;
-  transform: scale(1.02);
-}
-
-.style-card input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
+.style-card input { position: absolute; opacity: 0; pointer-events: none; }
 
 .card-media {
   position: relative;
-  width: var(--card-w);
-  height: var(--card-w);
+  width: min(240px, 68vw);
+  aspect-ratio: 1 / 1;
   border-radius: 22px;
   overflow: hidden;
   display: grid;
   place-items: center;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
-  border: 4px solid transparent;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  border: 4px solid var(--teal-dark);
+  box-shadow: 0 14px 34px rgba(46, 135, 140, 0.3);
 }
 
-.style-card.is-active .card-media {
-  border-color: var(--teal-dark);
-  box-shadow: 0 14px 34px rgba(46, 135, 140, 0.32);
-}
+.card-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
-.card-img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* Emoji is only shown when the real preview image is missing/not yet built. */
+/* Emoji only shows when the real preview image is missing/not yet built. */
 .card-emoji {
-  font-size: 4rem;
+  font-size: 4.5rem;
   line-height: 1;
   display: none;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
 }
 .card-media.no-preview .card-emoji { display: block; }
 
-/* Selected check badge on the centered card. */
-.style-card.is-active .card-media::after {
+.card-media::after {
   content: "✓ Selected";
   position: absolute;
   left: 50%;
@@ -295,13 +265,21 @@ button:disabled { opacity: 0.65; cursor: progress; }
   white-space: nowrap;
 }
 
-.style-title {
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--ink);
-}
+.style-title { font-size: 1.15rem; font-weight: 800; color: var(--teal-dark); }
 
-.style-card.is-active .style-title { color: var(--teal-dark); }
+/* Position dots */
+.pup-dots { display: flex; justify-content: center; gap: 7px; margin-top: 12px; }
+.pup-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--line);
+  cursor: pointer;
+  transition: width 0.2s ease, background 0.2s ease;
+}
+.pup-dot.is-on { width: 22px; background: var(--teal-dark); }
 
 /* Per-style fallback gradients (only visible until previews are generated) */
 .c1 { background: linear-gradient(135deg, #ffd27a, #ff9a3c); }
