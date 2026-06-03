@@ -71,14 +71,15 @@
 
         <div class="field">
           <span class="field-label">Pick your pup</span>
-          <span class="field-hint">A live preview of the QR you'll get. Swipe or use the arrows — the centered one is selected.</span>
-          <div class="scroller-wrap">
-            <button type="button" class="scroll-btn" data-dir="-1" aria-label="Previous style">‹</button>
-            <div class="style-scroller" id="styleScroller" role="radiogroup" aria-label="Choose a puppy style">
+          <span class="field-hint">A live preview of the QR you'll get. Tap the arrows or swipe — the one shown is selected.</span>
+          <div class="pup-carousel">
+            <button type="button" class="pup-nav" data-dir="-1" aria-label="Previous style">‹</button>
+            <div class="pup-stage" id="pupStage" role="radiogroup" aria-label="Choose a puppy style">
               {{styleCards}}
             </div>
-            <button type="button" class="scroll-btn" data-dir="1" aria-label="Next style">›</button>
+            <button type="button" class="pup-nav" data-dir="1" aria-label="Next style">›</button>
           </div>
+          <div class="pup-dots" id="pupDots" aria-hidden="true"></div>
         </div>
 
         <label class="field">
@@ -122,9 +123,7 @@
     <div class="ad-modal-panel" role="dialog" aria-modal="true" aria-label="Sponsored film">
       <div class="ad-tag">Sponsored · Advertisement</div>
       <div class="ad-video">
-        <iframe id="adFrame" title="Sponsored film" frameborder="0"
-                allow="autoplay; encrypted-media; picture-in-picture"
-                allowfullscreen></iframe>
+        <div id="adPlayer"></div>
         <!-- transparent layer blocks player controls / pausing -->
         <div class="ad-video-block"></div>
       </div>
@@ -180,87 +179,61 @@
       }, 3200);
     })();
 
-    // --- Focused style carousel (one highlighted at a time) -------------
-    (function initCarousel() {
-      const scroller = document.getElementById("styleScroller");
-      if (!scroller) return;
-      const cards = () => Array.from(scroller.querySelectorAll(".style-card"));
+    // --- Style picker: one pup at a time, centered ----------------------
+    (function initPupCarousel() {
+      const stage = document.getElementById("pupStage");
+      if (!stage) return;
+      const cards = Array.from(stage.querySelectorAll(".style-card"));
+      if (!cards.length) return;
+      const dotsWrap = document.getElementById("pupDots");
       const customInput = document.querySelector('input[name="customPuppy"]');
-      // Card center in the scroller's scroll-content coordinates (layout-proof).
-      const cardCenter = (el) => {
-        const sr = scroller.getBoundingClientRect();
-        const cr = el.getBoundingClientRect();
-        return (cr.left + cr.width / 2) - sr.left + scroller.scrollLeft;
-      };
 
-      function setActive(card, { check = true } = {}) {
-        if (!card) return;
-        cards().forEach((c) => c.classList.toggle("is-active", c === card));
-        const radio = card.querySelector('input[type="radio"]');
-        if (check && radio && !radio.checked) {
+      let idx = cards.findIndex((c) => c.querySelector("input")?.checked);
+      if (idx < 0) idx = 0;
+
+      const dots = cards.map((_, i) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "pup-dot";
+        b.setAttribute("aria-label", "Style " + (i + 1));
+        b.addEventListener("click", () => show(i));
+        dotsWrap.appendChild(b);
+        return b;
+      });
+
+      function show(i) {
+        idx = (i + cards.length) % cards.length;
+        cards.forEach((c, j) => c.classList.toggle("is-active", j === idx));
+        dots.forEach((d, j) => d.classList.toggle("is-on", j === idx));
+        const radio = cards[idx].querySelector("input");
+        if (radio) {
           radio.checked = true;
-          if (customInput) customInput.value = "";
+          if (customInput) customInput.value = ""; // explicit pick clears custom request
         }
       }
-      function nearestCard() {
-        const mid = scroller.scrollLeft + scroller.clientWidth / 2;
-        let best = null, bestDist = Infinity;
-        cards().forEach((c) => {
-          const d = Math.abs(cardCenter(c) - mid);
-          if (d < bestDist) { bestDist = d; best = c; }
-        });
-        return best;
-      }
-      function scrollToCard(card, smooth = true) {
-        if (!card) return;
-        scroller.scrollTo({ left: cardCenter(card) - scroller.clientWidth / 2, behavior: smooth ? "smooth" : "auto" });
-      }
-      let raf = null;
-      scroller.addEventListener("scroll", () => {
-        if (raf) return;
-        raf = requestAnimationFrame(() => { raf = null; setActive(nearestCard()); });
+
+      document.querySelectorAll(".pup-nav").forEach((btn) =>
+        btn.addEventListener("click", () => show(idx + Number(btn.dataset.dir)))
+      );
+
+      // Swipe (mobile)
+      let x0 = null;
+      stage.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+      stage.addEventListener("touchend", (e) => {
+        if (x0 === null) return;
+        const dx = e.changedTouches[0].clientX - x0;
+        x0 = null;
+        if (Math.abs(dx) > 40) show(idx + (dx < 0 ? 1 : -1));
       }, { passive: true });
-      cards().forEach((card) => card.addEventListener("click", () => { setActive(card); scrollToCard(card); }));
-      document.querySelectorAll(".scroll-btn").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const dir = Number(btn.dataset.dir);
-          const list = cards();
-          const idx = list.indexOf(scroller.querySelector(".style-card.is-active") || list[0]);
-          const next = list[Math.min(list.length - 1, Math.max(0, idx + dir))];
-          setActive(next); scrollToCard(next);
-        });
-      });
-      scroller.addEventListener("wheel", (e) => {
-        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
-        e.preventDefault();
-        scroller.scrollBy({ left: e.deltaY * 1.4 });
-      }, { passive: false });
-      // Center padding in px so the first/last card can reach the middle.
-      // Measured from the scroller's real width (not a CSS %), so it can't
-      // over-pad and hide the cards.
-      function applySidePadding() {
-        scroller.style.paddingLeft = "0px";
-        scroller.style.paddingRight = "0px";
-        const cw = cards()[0]?.getBoundingClientRect().width || 0;
-        const pad = Math.max(8, (scroller.clientWidth - cw) / 2);
-        scroller.style.paddingLeft = pad + "px";
-        scroller.style.paddingRight = pad + "px";
-      }
 
-      const initial = scroller.querySelector('.style-card input:checked')?.closest(".style-card") || cards()[0];
-      setActive(initial, { check: false });
-      applySidePadding();
-      requestAnimationFrame(() => { applySidePadding(); scrollToCard(initial, false); });
-
-      let rz;
-      window.addEventListener("resize", () => {
-        clearTimeout(rz);
-        rz = setTimeout(() => {
-          const active = scroller.querySelector(".style-card.is-active") || cards()[0];
-          applySidePadding();
-          scrollToCard(active, false);
-        }, 150);
+      // Keyboard
+      stage.setAttribute("tabindex", "0");
+      stage.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft") show(idx - 1);
+        else if (e.key === "ArrowRight") show(idx + 1);
       });
+
+      show(idx);
     })();
 
     // --- Rotating banner ads --------------------------------------------
@@ -274,7 +247,6 @@
           <span class="ad-cat">${a.cat}</span>
           <img class="ad-img" src="/ads/${a.id}.png" alt="" loading="lazy"
                onerror="this.remove();this.closest('.ad-media').classList.add('no-img');" />
-          <span class="ad-emoji">${a.emoji}</span>
         </span>
         <span class="ad-body">
           <span class="ad-title">${a.title}</span>
@@ -309,18 +281,48 @@
     const SKIP_AFTER = 20; // seconds
 
     let adTimer = null, adCurrentVideo = "";
+    let ytPlayer = null, ytApiReady = false, ytPending = false;
+
+    // Load the YouTube IFrame Player API. Define the global callback before the
+    // script loads so we never miss the ready event.
+    window.onYouTubeIframeAPIReady = function () {
+      ytApiReady = true;
+      if (ytPending) { ytPending = false; playCurrentVideo(); }
+    };
+    (function loadYouTubeApi() {
+      const s = document.createElement("script");
+      s.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(s);
+    })();
+
+    // Autoplay reliably: start muted (always allowed), then unmute so sound
+    // returns whenever the browser permits it (it does after any user gesture).
+    function playCurrentVideo() {
+      if (!ytApiReady) { ytPending = true; return; }
+      const onReady = (e) => {
+        try { e.target.playVideo(); e.target.unMute(); e.target.setVolume(100); } catch (_) {}
+      };
+      if (!ytPlayer) {
+        ytPlayer = new YT.Player("adPlayer", {
+          width: "100%", height: "100%",
+          videoId: adCurrentVideo,
+          playerVars: { autoplay: 1, mute: 1, controls: 0, modestbranding: 1, rel: 0, disablekb: 1, playsinline: 1, fs: 0, iv_load_policy: 3 },
+          events: { onReady },
+        });
+      } else {
+        ytPlayer.loadVideoById(adCurrentVideo);
+        onReady({ target: ytPlayer });
+      }
+    }
 
     function openAdModal() {
       const modal = document.getElementById("adModal");
-      const frame = document.getElementById("adFrame");
       const countdown = document.getElementById("adCountdown");
       const closeBtn = document.getElementById("adClose");
       const emailForm = document.getElementById("adEmail");
       if (!modal || modal.classList.contains("open")) return;
 
       adCurrentVideo = AD_VIDEOS[Math.floor(Math.random() * AD_VIDEOS.length)];
-      frame.src = `https://www.youtube.com/embed/${adCurrentVideo}` +
-        `?autoplay=1&controls=0&modestbranding=1&rel=0&disablekb=1&playsinline=1&fs=0&iv_load_policy=3`;
 
       // reset UI
       emailForm.reset();
@@ -332,6 +334,8 @@
       modal.classList.add("open");
       modal.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
+
+      playCurrentVideo();
 
       let left = SKIP_AFTER;
       countdown.textContent = `You can skip in ${left}s…`;
@@ -350,12 +354,11 @@
 
     function closeAdModal() {
       const modal = document.getElementById("adModal");
-      const frame = document.getElementById("adFrame");
       if (!modal) return;
       clearInterval(adTimer);
       modal.classList.remove("open");
       modal.setAttribute("aria-hidden", "true");
-      frame.src = ""; // stop playback
+      try { ytPlayer && ytPlayer.stopVideo(); } catch (_) {} // stop playback
       document.body.style.overflow = "";
     }
 
@@ -377,8 +380,11 @@
         e.target.querySelector(".ad-email-done").hidden = false;
       });
 
-      // Play the film when the user kicks off a generation (pre-roll ad).
-      document.querySelector("form[hx-post]").addEventListener("submit", () => openAdModal());
+      // Play the film after each successful QR generation.
+      const genForm = document.querySelector("form[hx-post]");
+      if (genForm) genForm.addEventListener("htmx:afterRequest", (e) => {
+        if (e.detail && e.detail.successful) openAdModal();
+      });
 
       // Auto-play once per session as an interstitial.
       try {

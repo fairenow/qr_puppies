@@ -53,7 +53,7 @@ function renderTemplate(name, data = {}) {
 // emoji tile if that preview hasn't been generated yet.
 function buildStyleCards() {
   return STYLES.map((s, i) => `
-      <label class="style-card" data-style="${escapeHtml(s.id)}">
+      <label class="style-card${i === 0 ? " is-active" : ""}" data-style="${escapeHtml(s.id)}">
         <input type="radio" name="puppyStyle" value="${escapeHtml(s.value)}"${i === 0 ? " checked" : ""} />
         <span class="card-media ${escapeHtml(s.gradient)}">
           <img class="card-img" src="/previews/${escapeHtml(s.id)}.png" alt="${escapeHtml(s.title)} preview" loading="lazy"
