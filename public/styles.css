@@ -16,6 +16,8 @@
 
 * { box-sizing: border-box; }
 
+html { overflow-x: hidden; }
+
 body {
   margin: 0;
   background: var(--bg-tint);
@@ -234,7 +236,10 @@ button:disabled { opacity: 0.65; cursor: progress; }
 
 .card-media {
   position: relative;
-  width: min(240px, 68vw);
+  /* 100% = the stage width (already minus the arrows), so it can never
+     overflow the row on narrow screens. */
+  width: min(240px, 100%);
+  max-width: 100%;
   aspect-ratio: 1 / 1;
   border-radius: 22px;
   overflow: hidden;
