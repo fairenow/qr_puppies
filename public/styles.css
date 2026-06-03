@@ -24,6 +24,8 @@ body {
   line-height: 1.5;
   /* room for the fixed bottom ad banner */
   padding-bottom: 124px;
+  /* guard: never let an inner element widen the page and shift centering */
+  overflow-x: hidden;
 }
 
 /* Header */

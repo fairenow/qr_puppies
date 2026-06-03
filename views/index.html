@@ -274,7 +274,6 @@
           <span class="ad-cat">${a.cat}</span>
           <img class="ad-img" src="/ads/${a.id}.png" alt="" loading="lazy"
                onerror="this.remove();this.closest('.ad-media').classList.add('no-img');" />
-          <span class="ad-emoji">${a.emoji}</span>
         </span>
         <span class="ad-body">
           <span class="ad-title">${a.title}</span>
@@ -377,8 +376,11 @@
         e.target.querySelector(".ad-email-done").hidden = false;
       });
 
-      // Play the film when the user kicks off a generation (pre-roll ad).
-      document.querySelector("form[hx-post]").addEventListener("submit", () => openAdModal());
+      // Play the film after each successful QR generation.
+      const genForm = document.querySelector("form[hx-post]");
+      if (genForm) genForm.addEventListener("htmx:afterRequest", (e) => {
+        if (e.detail && e.detail.successful) openAdModal();
+      });
 
       // Auto-play once per session as an interstitial.
       try {
