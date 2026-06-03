@@ -235,9 +235,32 @@
         e.preventDefault();
         scroller.scrollBy({ left: e.deltaY * 1.4 });
       }, { passive: false });
+      // Center padding in px so the first/last card can reach the middle.
+      // Measured from the scroller's real width (not a CSS %), so it can't
+      // over-pad and hide the cards.
+      function applySidePadding() {
+        scroller.style.paddingLeft = "0px";
+        scroller.style.paddingRight = "0px";
+        const cw = cards()[0]?.getBoundingClientRect().width || 0;
+        const pad = Math.max(8, (scroller.clientWidth - cw) / 2);
+        scroller.style.paddingLeft = pad + "px";
+        scroller.style.paddingRight = pad + "px";
+      }
+
       const initial = scroller.querySelector('.style-card input:checked')?.closest(".style-card") || cards()[0];
       setActive(initial, { check: false });
-      requestAnimationFrame(() => scrollToCard(initial, false));
+      applySidePadding();
+      requestAnimationFrame(() => { applySidePadding(); scrollToCard(initial, false); });
+
+      let rz;
+      window.addEventListener("resize", () => {
+        clearTimeout(rz);
+        rz = setTimeout(() => {
+          const active = scroller.querySelector(".style-card.is-active") || cards()[0];
+          applySidePadding();
+          scrollToCard(active, false);
+        }, 150);
+      });
     })();
 
     // --- Rotating banner ads --------------------------------------------
