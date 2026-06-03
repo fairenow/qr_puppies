@@ -1,25 +1,10 @@
 import "dotenv/config";
 import express from "express";
 import { readFileSync } from "node:fs";
-import QRCode from "qrcode";
-import sharp from "sharp";
-import { GoogleGenAI } from "@google/genai";
+import { STYLES } from "./lib/styles.js";
+import { createPuppyQrDataUrl } from "./lib/puppyqr.js";
 
 const app = express();
-
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-});
-
-const QR_SIZE = 1024;
-
-// QR Safety Mode -> badge size as a fraction of the QR width.
-// Smaller badges scan more reliably; bigger badges look bolder but risk readability.
-const SAFETY_MODES = {
-  safe: { ratio: 0.18, label: "Safe" },
-  balanced: { ratio: 0.24, label: "Balanced" },
-  bold: { ratio: 0.3, label: "Bold" },
-};
 
 // Load templates once at startup using literal `new URL(..., import.meta.url)`
 // paths. This pattern is statically traceable, so bundlers (incl. Vercel's
@@ -28,6 +13,8 @@ const TEMPLATES = {
   index: readFileSync(new URL("./views/index.html", import.meta.url), "utf8"),
   result: readFileSync(new URL("./views/result.html", import.meta.url), "utf8"),
 };
+
+const DEFAULT_STYLE = STYLES[0].value;
 
 app.use(express.urlencoded({ extended: true }));
 // Locally this serves /styles.css. On Vercel the platform serves the public/
@@ -60,120 +47,25 @@ function renderTemplate(name, data = {}) {
   return html;
 }
 
-async function generatePuppyImage({ puppyStyle }) {
-  const prompt = `
-Create a cute, friendly puppy portrait designed as a centered badge for a QR code.
-Style: ${puppyStyle}.
-Requirements:
-- puppy face clearly visible
-- centered composition
-- simple clean background
-- no text
-- no QR code
-- square image
-- high contrast
-- charming and professional
-`;
-
-  const response = await ai.models.generateImages({
-    model: "imagen-4.0-generate-001",
-    prompt,
-    config: {
-      numberOfImages: 1,
-      aspectRatio: "1:1",
-    },
-  });
-
-  const imageBytes = response.generatedImages?.[0]?.image?.imageBytes;
-  if (!imageBytes) {
-    throw new Error("Gemini did not return an image.");
-  }
-
-  return Buffer.from(imageBytes, "base64");
-}
-
-async function createCircularBadge(imageBuffer, size, borderSize) {
-  const circleMask = Buffer.from(`
-    <svg width="${size}" height="${size}">
-      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2}" fill="white"/>
-    </svg>
-  `);
-
-  const puppyCircle = await sharp(imageBuffer)
-    .resize(size, size, { fit: "cover" })
-    .composite([
-      {
-        input: circleMask,
-        blend: "dest-in",
-      },
-    ])
-    .png()
-    .toBuffer();
-
-  const badgeBackground = Buffer.from(`
-    <svg width="${borderSize}" height="${borderSize}">
-      <circle cx="${borderSize / 2}" cy="${borderSize / 2}" r="${borderSize / 2}" fill="white"/>
-    </svg>
-  `);
-
-  return sharp({
-    create: {
-      width: borderSize,
-      height: borderSize,
-      channels: 4,
-      background: { r: 0, g: 0, b: 0, alpha: 0 },
-    },
-  })
-    .composite([
-      { input: badgeBackground, left: 0, top: 0 },
-      {
-        input: puppyCircle,
-        left: Math.floor((borderSize - size) / 2),
-        top: Math.floor((borderSize - size) / 2),
-      },
-    ])
-    .png()
-    .toBuffer();
-}
-
-async function createPuppyQrCode({ targetUrl, puppyStyle, safetyMode }) {
-  const mode = SAFETY_MODES[safetyMode] ?? SAFETY_MODES.balanced;
-  const badgeSize = Math.round(QR_SIZE * mode.ratio);
-  // Keep the inner puppy slightly smaller than the white badge border.
-  const puppySize = Math.round(badgeSize * 0.85);
-
-  const qrBuffer = await QRCode.toBuffer(targetUrl, {
-    type: "png",
-    width: QR_SIZE,
-    margin: 3,
-    errorCorrectionLevel: "H",
-    color: {
-      dark: "#111111",
-      light: "#FFFFFF",
-    },
-  });
-
-  const puppyBuffer = await generatePuppyImage({ puppyStyle });
-  const badgeBuffer = await createCircularBadge(puppyBuffer, puppySize, badgeSize);
-
-  // Composite entirely in memory — nothing is written to disk.
-  const finalImageBuffer = await sharp(qrBuffer)
-    .composite([
-      {
-        input: badgeBuffer,
-        left: Math.floor((QR_SIZE - badgeSize) / 2),
-        top: Math.floor((QR_SIZE - badgeSize) / 2),
-      },
-    ])
-    .png()
-    .toBuffer();
-
-  const dataUrl = `data:image/png;base64,${finalImageBuffer.toString("base64")}`;
-  return { dataUrl, modeLabel: mode.label };
+// Build the style picker cards from the shared STYLES list. Each card shows a
+// real generated preview (/previews/<id>.png) and falls back to a gradient +
+// emoji tile if that preview hasn't been generated yet.
+function buildStyleCards() {
+  return STYLES.map((s, i) => `
+      <label class="style-card" data-style="${escapeHtml(s.id)}">
+        <input type="radio" name="puppyStyle" value="${escapeHtml(s.value)}"${i === 0 ? " checked" : ""} />
+        <span class="card-media ${escapeHtml(s.gradient)}">
+          <img class="card-img" src="/previews/${escapeHtml(s.id)}.png" alt="${escapeHtml(s.title)} preview" loading="lazy"
+               onerror="this.remove();this.closest('.card-media').classList.add('no-preview');" />
+          <span class="card-emoji">${s.emoji}</span>
+        </span>
+        <span class="style-title">${escapeHtml(s.title)}</span>
+      </label>`).join("");
 }
 
 app.get("/", (req, res) => {
-  res.send(renderTemplate("index"));
+  const html = renderTemplate("index").replace("{{styleCards}}", buildStyleCards());
+  res.send(html);
 });
 
 app.post("/generate", async (req, res) => {
@@ -194,9 +86,9 @@ app.post("/generate", async (req, res) => {
 
     // A typed custom request wins over the picked style.
     const custom = (customPuppy || "").trim().slice(0, 120);
-    const chosenStyle = custom || puppyStyle || "soft 3D sticker illustration";
+    const chosenStyle = custom || puppyStyle || DEFAULT_STYLE;
 
-    const { dataUrl, modeLabel } = await createPuppyQrCode({
+    const { dataUrl, modeLabel } = await createPuppyQrDataUrl({
       targetUrl,
       puppyStyle: chosenStyle,
       safetyMode,

@@ -8,7 +8,9 @@
   },
   "scripts": {
     "dev": "node server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "node scripts/generate-previews.mjs",
+    "previews": "node scripts/generate-previews.mjs"
   },
   "dependencies": {
     "@google/genai": "^0.3.0",
