@@ -185,7 +185,12 @@
       if (!scroller) return;
       const cards = () => Array.from(scroller.querySelectorAll(".style-card"));
       const customInput = document.querySelector('input[name="customPuppy"]');
-      const centerOf = (el) => el.offsetLeft + el.offsetWidth / 2;
+      // Card center in the scroller's scroll-content coordinates (layout-proof).
+      const cardCenter = (el) => {
+        const sr = scroller.getBoundingClientRect();
+        const cr = el.getBoundingClientRect();
+        return (cr.left + cr.width / 2) - sr.left + scroller.scrollLeft;
+      };
 
       function setActive(card, { check = true } = {}) {
         if (!card) return;
@@ -200,14 +205,14 @@
         const mid = scroller.scrollLeft + scroller.clientWidth / 2;
         let best = null, bestDist = Infinity;
         cards().forEach((c) => {
-          const d = Math.abs(centerOf(c) - mid);
+          const d = Math.abs(cardCenter(c) - mid);
           if (d < bestDist) { bestDist = d; best = c; }
         });
         return best;
       }
       function scrollToCard(card, smooth = true) {
         if (!card) return;
-        scroller.scrollTo({ left: centerOf(card) - scroller.clientWidth / 2, behavior: smooth ? "smooth" : "auto" });
+        scroller.scrollTo({ left: cardCenter(card) - scroller.clientWidth / 2, behavior: smooth ? "smooth" : "auto" });
       }
       let raf = null;
       scroller.addEventListener("scroll", () => {
