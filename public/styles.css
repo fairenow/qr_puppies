@@ -197,7 +197,9 @@ button:disabled { opacity: 0.65; cursor: progress; }
 .scroller-wrap { align-items: center; }
 
 .style-scroller {
-  --card-w: 208px;
+  --card-w: clamp(150px, 48vw, 208px);
+  flex: 1 1 0;
+  min-width: 0; /* allow the flex child to shrink so it scrolls instead of overflowing the card */
   display: flex;
   gap: 18px;
   overflow-x: auto;
@@ -388,8 +390,8 @@ button:disabled { opacity: 0.65; cursor: progress; }
   border-top: 1px solid var(--line);
 }
 
-/* Show the left rail only when there's room beside the narrow column */
-@media (min-width: 1180px) {
+/* Show the left rail once there's room beside the narrow 560px column */
+@media (min-width: 1024px) {
   .ad-slot--left { display: block; }
 }
 
