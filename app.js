@@ -22,10 +22,20 @@ app.use(express.urlencoded({ extended: true }));
 // directory statically before requests ever reach this function.
 app.use(express.static(new URL("./public", import.meta.url).pathname));
 
+// Accept input with or without a scheme: "yoursite.com" -> "https://yoursite.com".
+// Leaves an explicit non-http(s) scheme alone so it gets rejected by isValidUrl.
+function normalizeUrl(value) {
+  const v = (value || "").trim();
+  if (!v) return "";
+  if (/^https?:\/\//i.test(v)) return v;
+  if (v.includes("://")) return v; // some other scheme — leave it to be rejected
+  return `https://${v}`;
+}
+
 function isValidUrl(value) {
   try {
     const url = new URL(value);
-    return ["http:", "https:"].includes(url.protocol);
+    return ["http:", "https:"].includes(url.protocol) && !!url.hostname;
   } catch {
     return false;
   }
@@ -84,7 +94,8 @@ app.post("/lead", (req, res) => {
 
 app.post("/generate", async (req, res) => {
   try {
-    const { targetUrl, puppyStyle, customPuppy, safetyMode } = req.body;
+    const { puppyStyle, customPuppy, safetyMode } = req.body;
+    const targetUrl = normalizeUrl(req.body.targetUrl);
 
     if (!targetUrl || !isValidUrl(targetUrl)) {
       const html = renderTemplate("result", {
