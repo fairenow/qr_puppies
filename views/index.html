@@ -143,6 +143,7 @@
     </div>
   </div>
 
+  <script type="application/json" id="adsData">{{adsData}}</script>
   <script>
     // --- Rotating real-puppy photos -------------------------------------
     // These hotlink real dog photos so the user's browser loads them.
@@ -240,27 +241,30 @@
     })();
 
     // --- Rotating banner ads --------------------------------------------
-    const AD_CREATIVES = [
-      { cat: "DOG",        emoji: "🦴", title: "PupBox Treats",     sub: "Healthy chews, delivered", bg: "linear-gradient(135deg,#ff9a3c,#e8742c)" },
-      { cat: "FOOD",       emoji: "🍖", title: "Farm Fresh Kibble", sub: "Real meat, no fillers",    bg: "linear-gradient(135deg,#3aa8ae,#2e878c)" },
-      { cat: "COMMERCIAL", emoji: "🎬", title: "Now Streaming",     sub: "Watch the film",           bg: "linear-gradient(135deg,#1e50c8,#3a6fe0)" },
-      { cat: "ADOPT",      emoji: "🐕", title: "Adopt, Don't Shop", sub: "Find your best friend",    bg: "linear-gradient(135deg,#b4bb7d,#8f9a4e)" },
-      { cat: "FOOD",       emoji: "🥩", title: "BarkBite Jerky",    sub: "Tail-wagging good",        bg: "linear-gradient(135deg,#e88a6b,#d9684a)" },
-      { cat: "GEAR",       emoji: "🦺", title: "TrailPup Harness",  sub: "Adventure ready",          bg: "linear-gradient(135deg,#7f7fd5,#86a8e7)" },
-    ];
+    let AD_CREATIVES = [];
+    try { AD_CREATIVES = JSON.parse(document.getElementById("adsData").textContent || "[]"); }
+    catch (_) { AD_CREATIVES = []; }
 
     function adMarkup(a) {
-      return `<button type="button" class="ad-creative" style="--ad-bg:${a.bg}">
-        <span class="ad-cat">${a.cat}</span>
-        <span class="ad-emoji">${a.emoji}</span>
-        <span class="ad-text"><span class="ad-title">${a.title}</span><span class="ad-sub">${a.sub}</span></span>
-        <span class="ad-cta">Learn more →</span>
+      return `<button type="button" class="ad-creative">
+        <span class="ad-media" style="--ad-bg:${a.gradient}">
+          <span class="ad-cat">${a.cat}</span>
+          <img class="ad-img" src="/ads/${a.id}.png" alt="" loading="lazy"
+               onerror="this.remove();this.closest('.ad-media').classList.add('no-img');" />
+          <span class="ad-emoji">${a.emoji}</span>
+        </span>
+        <span class="ad-body">
+          <span class="ad-title">${a.title}</span>
+          <span class="ad-sub">${a.sub}</span>
+          <span class="ad-cta">${a.cta}</span>
+        </span>
       </button>`;
     }
 
     (function initAds() {
       const left = document.getElementById("leftAd");
       const bottom = document.getElementById("bottomAd");
+      if (!AD_CREATIVES.length) return;
       let i = Math.floor(Math.random() * AD_CREATIVES.length);
       function paint() {
         const a = AD_CREATIVES[i % AD_CREATIVES.length];

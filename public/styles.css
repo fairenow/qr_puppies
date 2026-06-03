@@ -398,52 +398,88 @@ button:disabled { opacity: 0.65; cursor: progress; }
 .ad-creative {
   position: relative;
   display: flex;
-  align-items: center;
-  gap: 12px;
   width: 100%;
   border: none;
+  padding: 0;
   cursor: pointer;
-  color: #fff;
   text-align: left;
-  background: var(--ad-bg, var(--teal));
+  color: var(--ink);
+  background: #fff;
   border-radius: 18px;
-  padding: 16px;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
   overflow: hidden;
   font-family: inherit;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.16);
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 .ad-creative:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(0, 0, 0, 0.24); }
 
+/* Image slot — polished placeholder until /ads/<id>.png is generated */
+.ad-media {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--ad-bg, var(--teal));
+  overflow: hidden;
+}
+.ad-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ad-emoji {
+  font-size: 2.4rem;
+  line-height: 1;
+  color: #fff;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+}
+
 .ad-cat {
   position: absolute;
-  top: 10px;
-  right: 12px;
-  font-size: 0.6rem;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  font-size: 0.58rem;
   font-weight: 800;
   letter-spacing: 0.08em;
-  background: rgba(255, 255, 255, 0.28);
-  padding: 2px 7px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 3px 8px;
   border-radius: 999px;
 }
-.ad-emoji { font-size: 2.1rem; line-height: 1; flex: none; }
-.ad-text { display: flex; flex-direction: column; line-height: 1.2; }
-.ad-title { font-weight: 800; font-size: 1rem; }
-.ad-sub { font-size: 0.8rem; opacity: 0.92; }
-.ad-cta { margin-left: auto; font-weight: 800; font-size: 0.82rem; white-space: nowrap; }
 
-/* Left rail stacks vertically and is taller */
-.ad-slot--left .ad-creative {
+.ad-body {
+  display: flex;
   flex-direction: column;
-  text-align: center;
-  gap: 10px;
-  padding: 22px 16px;
+  gap: 2px;
+  padding: 12px 14px;
+  min-width: 0;
 }
-.ad-slot--left .ad-emoji { font-size: 3rem; }
-.ad-slot--left .ad-cta { margin-left: 0; }
-.ad-slot--left .ad-cat { position: static; align-self: center; }
+.ad-title { font-weight: 800; font-size: 1rem; color: var(--ink); }
+.ad-sub { font-size: 0.82rem; color: var(--muted); }
+.ad-cta { margin-top: 4px; font-weight: 800; font-size: 0.82rem; color: var(--orange); }
 
-.ad-slot--bottom .ad-creative { max-width: 640px; }
+/* Tiny "Ad" disclosure */
+.ad-creative::after {
+  content: "Ad";
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+/* Left rail: image on top, body below */
+.ad-slot--left .ad-creative { flex-direction: column; }
+.ad-slot--left .ad-media { width: 100%; height: 132px; }
+.ad-slot--left .ad-emoji { font-size: 3rem; }
+
+/* Bottom banner: image left, body right */
+.ad-slot--bottom .ad-creative { flex-direction: row; align-items: stretch; max-width: 660px; }
+.ad-slot--bottom .ad-media { width: 84px; }
+.ad-slot--bottom .ad-body { justify-content: center; }
+.ad-slot--bottom .ad-cta { margin-top: 2px; }
 
 /* ============================ Film ad modal ============================ */
 .ad-modal {

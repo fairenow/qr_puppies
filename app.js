@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import { readFileSync } from "node:fs";
 import { STYLES } from "./lib/styles.js";
+import { publicAds } from "./lib/ads.js";
 import { createPuppyQrDataUrl } from "./lib/puppyqr.js";
 
 const app = express();
@@ -63,8 +64,13 @@ function buildStyleCards() {
       </label>`).join("");
 }
 
+// JSON for the client, with "<" escaped so it's safe inside a <script> tag.
+const ADS_JSON = JSON.stringify(publicAds()).replace(/</g, "\\u003c");
+
 app.get("/", (req, res) => {
-  const html = renderTemplate("index").replace("{{styleCards}}", buildStyleCards());
+  const html = renderTemplate("index")
+    .replace("{{styleCards}}", buildStyleCards())
+    .replace("{{adsData}}", ADS_JSON);
   res.send(html);
 });
 
